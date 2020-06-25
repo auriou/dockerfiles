@@ -6,12 +6,11 @@
 
 FROM debian:10-slim
 
-#ENV container docker
-#ENV LC_ALL C
-#ENV DEBIAN_FRONTEND noninteractive
-ENV ASPNETCORE_URLS="http://+:80"
+# ADD DOTNETCORE VARIABLES
+ENV ASPNETCORE_URLS="http://*:80"
 ENV DOTNET_RUNNING_IN_CONTAINER="true"
 
+# ADD SYSTEMD
 RUN apt-get update \
     && apt-get install -y \
         systemd systemd-sysv \
@@ -32,6 +31,7 @@ RUN apt-get update \
 RUN wget https://packages.microsoft.com/config/debian/10/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
 RUN dpkg -i packages-microsoft-prod.deb
 
+# SDK
 #RUN apt-get update; \
 #    apt-get install -y apt-transport-https && \
 #    apt-get update && \
@@ -43,6 +43,18 @@ RUN apt-get update; \
     apt-get install -y aspnetcore-runtime-3.1
 
 RUN apt-get install -y dotnet-runtime-3.1
+
+# ADD SERVICE KESTREL
+ADD kestrel.service /etc/systemd/system/kestrel.service
+RUN ln -s /etc/systemd/system/kestrel.service /etc/systemd/system/multi-user.target.wants/kestrel.service
+
+# TOOLS FOR ANALYSE
+#RUN apt-get update \
+#    && apt-get -y install procps
+
+#RUN dotnet tool install --global dotnet-trace
+#RUN dotnet tool install --global dotnet-counters
+#RUN dotnet tool install -g dotnet-dump
 
 VOLUME [ "/sys/fs/cgroup" ]
 
