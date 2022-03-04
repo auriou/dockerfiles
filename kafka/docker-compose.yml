@@ -60,5 +60,4 @@ services:
       - kafka2
     networks:
       - kafka-cluster
-
-  
+ 
