@@ -1,0 +1,78 @@
+version: '3'
+
+networks:
+  kafka-cluster:
+    name: kafka-cluster
+    driver: bridge
+
+services:
+  zookeeper:
+    image: bitnami/zookeeper:latest
+    container_name: zookeeper
+    ports:
+      - '2999:2181'
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+      - ZOO_MY_ID=1
+      - ZOO_PORT=2999
+      - ZOO_SERVERS=server.1=zookeeper:2888:3888
+    volumes:
+      - ./data/zookeeper/data:/data
+      - ./data/zookeeper/datalog:/datalog
+    networks:
+      - kafka-cluster
+
+  kafka1:
+    image: bitnami/kafka:latest
+    container_name: kafka1
+    ports:
+      - '9093:9093'
+    environment:
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2999
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2999
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CLIENT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      - KAFKA_CFG_LISTENERS=CLIENT://:9092,EXTERNAL://:9093
+      - KAFKA_CFG_ADVERTISED_LISTENERS=CLIENT://kafka1:9092,EXTERNAL://localhost:9093
+      - KAFKA_INTER_BROKER_LISTENER_NAME=CLIENT
+      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
+    volumes:
+      - ./data/kafka1/data:/var/lib/kafka/data
+    depends_on:
+      - zookeeper
+    networks:
+      - kafka-cluster
+
+  kafka2:
+    image: bitnami/kafka:latest
+    container_name: kafka2
+    ports:
+      - '9094:9094'
+    environment:
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2999
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2999
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CLIENT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      - KAFKA_CFG_LISTENERS=CLIENT://:9092,EXTERNAL://:9094
+      - KAFKA_CFG_ADVERTISED_LISTENERS=CLIENT://kafka2:9092,EXTERNAL://localhost:9094
+      - KAFKA_INTER_BROKER_LISTENER_NAME=CLIENT
+      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
+    volumes:
+      - ./data/kafka2/data:/var/lib/kafka/data
+    depends_on:
+      - zookeeper
+    networks:
+      - kafka-cluster
+
+  kafdrop:
+    image: obsidiandynamics/kafdrop:latest
+    container_name: kafdrop
+    ports:
+      - 9000:9000
+    environment:
+      - KAFKA_BROKERCONNECT=kafka1:9092,kafka2:9092
+    depends_on: 
+      - kafka1
+      - kafka2
+    networks:
+      - kafka-cluster
