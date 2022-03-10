@@ -1,12 +1,32 @@
-# https://medium.com/event-driven-utopia/configuring-debezium-to-capture-postgresql-changes-with-docker-compose-224742ca5372
 version: "3.7"
+
+networks:
+  kafka-cluster:
+    name: kafka-cluster
+    driver: bridge
+
+volumes:
+    zookeeper-data:
+    kafka1-data:
+    kafka2-data:
+    debezium-data:
+    sql-data:
+
 services:
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
     ports:
-          - 22181:2181
+      - 22181:2181
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
+    volumes:
+      - zookeeper-data:/datalog
+      - zookeeper-data:/data
+      - zookeeper-data:/etc/zookeeper/secrets
+      - zookeeper-data:/var/lib/zookeeper/data
+      - zookeeper-data:/var/lib/zookeeper/log
+    networks:
+      - kafka-cluster
 
   kafka1:
     image: confluentinc/cp-kafka:latest
@@ -17,32 +37,30 @@ services:
       KAFKA_BROKER_ID: 1
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_JMX_PORT: 9991
+    volumes:
+      - kafka1-data:/var/lib/kafka/data
+      - kafka1-data:/etc/kafka/secrets
     ports:
-    - 9092:9092
+      - 9092:9092
+    networks:
+      - kafka-cluster
 
   kafka2:
     image: confluentinc/cp-kafka:latest
-    depends_on: [zookeeper]
+    depends_on: [zookeeper,kafka1]
     environment:
       KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka2:9093
       KAFKA_BROKER_ID: 2
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_JMX_PORT: 9991
+    volumes:
+      - kafka2-data:/var/lib/kafka/data
+      - kafka2-data:/etc/kafka/secrets
     ports:
-    - 9093:9093
-
-  debezium:
-    image: debezium/connect:latest
-    environment:
-      - BOOTSTRAP_SERVERS=kafka1:9092
-      - GROUP_ID=1
-      - CONFIG_STORAGE_TOPIC=my_connect_configs
-      - OFFSET_STORAGE_TOPIC=my_connect_offsets
-      - STATUS_STORAGE_TOPIC=my_connect_statuses
-    depends_on: [kafka1,kafka2]
-    ports:
-      - 8083:8083
+      - 9093:9093
+    networks:
+      - kafka-cluster
 
   kafdrop:
     image: obsidiandynamics/kafdrop
@@ -52,3 +70,6 @@ services:
     environment:
       KAFKA_BROKERCONNECT: "kafka1:9092"
     depends_on: [kafka1,kafka2]
+    networks:
+      - kafka-cluster
+

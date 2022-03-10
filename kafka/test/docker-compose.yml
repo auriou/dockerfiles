@@ -10,7 +10,6 @@ volumes:
     kafka1-data:
     kafka2-data:
     debezium-data:
-    sql-data:
 
 services:
   zookeeper:
@@ -47,7 +46,7 @@ services:
 
   kafka2:
     image: confluentinc/cp-kafka:latest
-    depends_on: [zookeeper,kafka1]
+    depends_on: [zookeeper]
     environment:
       KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka2:9093
@@ -98,11 +97,7 @@ services:
     environment:
      - ACCEPT_EULA=Y
      - MSSQL_PID=Standard
-     - SA_PASSWORD=Philippe@2022
+     - SA_PASSWORD=Philippe@1969
      - MSSQL_AGENT_ENABLED=true
-    volumes:
-      - sql-data:/var/opt/mssql
-      - sql-data:/var/opt/mssql/log
-      - sql-data:/var/opt/mssql/secrets
     networks:
       - kafka-cluster
