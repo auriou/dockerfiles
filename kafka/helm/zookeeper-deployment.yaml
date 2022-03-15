@@ -1,0 +1,58 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.16.0 (0c01309)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: zookeeper
+  name: zookeeper
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        io.kompose.service: zookeeper
+    spec:
+      containers:
+      - env:
+        - name: ZOOKEEPER_CLIENT_PORT
+          value: "2181"
+        image: confluentinc/cp-zookeeper:latest
+        name: zookeeper
+        ports:
+        - containerPort: 2181
+        resources: {}
+        volumeMounts:
+        - mountPath: /datalog
+          name: zookeeper-datalog
+        - mountPath: /data
+          name: zookeeper-data
+        - mountPath: /etc/zookeeper/secrets
+          name: zookeeper-datasecrets
+        - mountPath: /var/lib/zookeeper/data
+          name: zookeeper-datalib
+        - mountPath: /var/lib/zookeeper/log
+          name: zookeeper-dataloglib
+      restartPolicy: Always
+      volumes:
+      - name: zookeeper-datalog
+        persistentVolumeClaim:
+          claimName: zookeeper-datalog
+      - name: zookeeper-data
+        persistentVolumeClaim:
+          claimName: zookeeper-data
+      - name: zookeeper-datasecrets
+        persistentVolumeClaim:
+          claimName: zookeeper-datasecrets
+      - name: zookeeper-datalib
+        persistentVolumeClaim:
+          claimName: zookeeper-datalib
+      - name: zookeeper-dataloglib
+        persistentVolumeClaim:
+          claimName: zookeeper-dataloglib
+status: {}
