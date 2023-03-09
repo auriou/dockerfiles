@@ -1,0 +1,24 @@
+version: '3.9'
+
+services:
+  client:
+    image: nginx
+    ports:
+      - '8080:80'
+    volumes:
+      - nginxconfig:/etc/nginx/myconfig
+      - nginxservice:/etc/systemd/system/multi-user.target.wants
+
+volumes:
+  nginxconfig:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "/mnt/c/Users/p.auriou/Documents/GIT/azure/aci/nginx/docker/config"
+  nginxservice:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: "/mnt/c/Users/p.auriou/Documents/GIT/azure/aci/nginx/docker/service"
